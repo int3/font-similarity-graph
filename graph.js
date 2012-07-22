@@ -1,5 +1,5 @@
 var width = 1080,
-    height = 500;
+    height = 600;
 
 var color = d3.scale.category20();
 var GLOBAL_COLOR_ID = 0;
@@ -8,7 +8,7 @@ var FIRST_DEG_COLOR_ID = 2;
 
 var force = d3.layout.force()
     .charge(-1500)
-    .linkDistance(300)
+    .linkDistance(250)
     .size([width, height]);
 
 var svg = d3.select("#chart").append("svg")
@@ -29,6 +29,7 @@ function redraw(json) {
       .data(json.links)
     .enter().append("line")
       .attr("class", "link")
+      .attr('weight', function(d) { return d.count; })
       .style("stroke-width", function(d) { return Math.sqrt(d.value); });
 
   var node = topGroup.selectAll("g.node")
@@ -71,18 +72,58 @@ function redraw(json) {
       json.nodes[i].group = GLOBAL_COLOR_ID;
     }
     d.group = ZERO_DEG_COLOR_ID;
-    for (var i = 0; i < json.links.length; i++) {
-      if (json.links[i].source == d) {
-        json.links[i].target.group = FIRST_DEG_COLOR_ID;
+    var seen = [[d]];
+    var allSeen = [d];
+    var allSeenLinks = [];
+    for (var i = 0; i < 20; i++){
+      var boundary = seen[seen.length - 1];
+      var newBoundary = [];
+
+      for(var j in boundary){
+        boundary[j].group = i;
+        var children = getAllNeighbours(boundary[j]);
+        for(var c in children){
+          var childTarget = children[c][0];
+          if (allSeen.indexOf(childTarget) === -1){
+            newBoundary.push(childTarget);
+            allSeen.push(childTarget);
+          }
+          var childLine = children[c][1];
+          if (allSeenLinks.indexOf(childLine) === -1) {
+            childLine.group = i;
+            allSeenLinks.push(childLine);
+          }
+        }
       }
-      else if (json.links[i].target == d) {
-        json.links[i].source.group = FIRST_DEG_COLOR_ID;
-      }
+      seen.push(newBoundary);
     }
     topGroup.selectAll("g.node")
        .data(json.nodes)
        .selectAll("rect")
-       .style("fill", function(d) { return color(d.group || 0); });
+       .style("fill", function(d) { return 'hsl(204,' + (70 - 15 * d.group) + '%,' + (50 + d.group * 15) + '%)'; });
+
+    topGroup.selectAll("line.link")
+      .data(json.links)
+      .style("stroke", function(d) { return "hsl(170," + (50 - 15 * d.group) + '%,' + (30 + d.group * 15) + '%)'; })
+      .attr('weight', function(d) { if (d.group == 1) return d.count * 100; else return d.count; })
+      .style("stroke-width", function(d) { if (d.group == 0) { return 2; } else { return 1; } });
+
+
+    force.stop();
+    force.start();
+  }
+
+  function getAllNeighbours(d) {
+    var result = [];
+    for (var i = 0; i < json.links.length; i++) {
+      if (json.links[i].source == d) {
+        result.push([json.links[i].target, json.links[i]]);
+      }
+      else if (json.links[i].target == d) {
+        result.push([json.links[i].source, json.links[i]]);
+      }
+    }
+    return result;
   }
 }
 
