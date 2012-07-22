@@ -1,11 +1,14 @@
-var width = 960,
+var width = 1080,
     height = 500;
 
 var color = d3.scale.category20();
+var GLOBAL_COLOR_ID = 0;
+var ZERO_DEG_COLOR_ID = 1;
+var FIRST_DEG_COLOR_ID = 2;
 
 var force = d3.layout.force()
-    .charge(-1000)
-    .linkDistance(60)
+    .charge(-1500)
+    .linkDistance(300)
     .size([width, height]);
 
 var svg = d3.select("#chart").append("svg")
@@ -32,8 +35,7 @@ function redraw(json) {
       .data(json.nodes)
     .enter().append("g")
       .attr("class", "node")
-      .call(force.drag)
-      .on("click", onClick);
+      .call(force.drag);
 
   node.append("rect")
       .attr("width", function(d) { return 6 * d.name.length; })
@@ -42,7 +44,8 @@ function redraw(json) {
       .attr("y", -15)
       .attr("rx", 5)
       .attr("ry", 5)
-      .style("fill", function(d) { return color(d.group); });
+      .style("fill", function(d) { return color(d.group || 0); })
+      .on("click", onClick);
 
   node.append("text")
       .attr("text-anchor", "middle")
@@ -58,8 +61,28 @@ function redraw(json) {
   });
 
   function onClick(d) {
-    topGroup.attr("x", width/2 - d.x);
-    topGroup.attr("y", height/2 - d.y);
+    topGroup.transition().duration(1000)
+      .attr("x", width/2 - d.x)
+      .attr("y", height/2 - d.y);
+
+    //svg.selectAll("rect").style("fill", function(d) { return color(GLOBAL_COLOR_ID); });
+    //d3.select(this).style("fill", color(ZERO_DEG_COLOR_ID));
+    for (var i = 0; i < json.nodes.length; i++) {
+      json.nodes[i].group = GLOBAL_COLOR_ID;
+    }
+    d.group = ZERO_DEG_COLOR_ID;
+    for (var i = 0; i < json.links.length; i++) {
+      if (json.links[i].source == d) {
+        json.links[i].target.group = FIRST_DEG_COLOR_ID;
+      }
+      else if (json.links[i].target == d) {
+        json.links[i].source.group = FIRST_DEG_COLOR_ID;
+      }
+    }
+    topGroup.selectAll("g.node")
+       .data(json.nodes)
+       .selectAll("rect")
+       .style("fill", function(d) { return color(d.group || 0); });
   }
 }
 
