@@ -11,8 +11,12 @@ line.link {
 text {
   font: 18px sans-serif;
   pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
 }
-
+text.hover{
+  -webkit-text-stroke: red;
+}
 .closeBtn {
   float: right;
   font-size: 16px;
@@ -31,4 +35,12 @@ h2.sidefont {
 
 h2.sidefont:hover {
   cursor:default;
+}
+
+#sidebar {
+  padding-left: 8px;
+}
+
+#loadImg {
+  position: absolute;
 }
