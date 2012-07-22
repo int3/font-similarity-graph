@@ -18,6 +18,11 @@ var color = d3.scale.category20();
 var GLOBAL_COLOR_ID = 0;
 var ZERO_DEG_COLOR_ID = 1;
 
+var LOREM_IPSUM = "I saw for the first time the earth's shape. I could easily see the shores of \
+continents, islands, great rivers, folds of the terrain, large bodies of water. \
+The horizon is dark blue, smoothly turning to black. . . the feelings which \
+filled me I can express with one word&mdash;joy.";
+
 var isDragging = false;
 var dragStart = {};
 
@@ -69,8 +74,8 @@ function redraw(json) {
       .attr("ry", 5)
       .style("fill", function(d) { return "rgba(0,0,0,0)"}) //color(d.group || 0); })
       .on("click", onClick)
-      .on("mouseout", function(cow){return onHover(selectedNode)})
-      .on("mouseover", onHover)
+      .on("mouseout", function(cow){return onHover(selectedNode);})
+      .on("mouseover", onHover);
 
   node.append("text")
       .attr("text-anchor", "middle")
@@ -105,13 +110,10 @@ function redraw(json) {
 
   function onHover(d){
     //console.log("hover lolz: " + d.name)
-    d3.select("#title2") 
-      .style("font-family", function(moo) { return d.name; })
-      .html(d.name)
-      
-    d3.select("#lorem2") 
-      .style("font-family", function(moo) { return d.name; })
-
+    var sidebar = document.getElementById('sidebar');
+    sidebar.innerHTML = "<h2>" + d.name + "</h2>" +
+      "<p>" + LOREM_IPSUM + "</p>";
+    sidebar.style.fontFamily = d.name;
   }
   function onClick(d) {
     selectedNode = d;
@@ -119,8 +121,6 @@ function redraw(json) {
       .attr("x", width/2 - d.x)
       .attr("y", height/2 - d.y);
 
-    //svg.selectAll("rect").style("fill", function(d) { return color(GLOBAL_COLOR_ID); });
-    //d3.select(this).style("fill", color(ZERO_DEG_COLOR_ID));
     for (var i = 0; i < json.nodes.length; i++) {
       json.nodes[i].group = GLOBAL_COLOR_ID;
     }
@@ -134,7 +134,7 @@ function redraw(json) {
 
       for(var j in boundary){
         boundary[j].group = i;
-        var children = getAllNeighbours(boundary[j]);
+        var children = getAllNeighbors(boundary[j]);
         for(var c in children){
           var childTarget = children[c][0];
           var childLine = children[c][1];
@@ -155,7 +155,6 @@ function redraw(json) {
        .selectAll("text")
        .style("opacity", function(d) { return 1 - d.group / 6; })
        .style("font-size", function(d) { return 32 - d.group * 5 });
-       //.style("fill", function(d) { return 'hsl(204,' + (70 - 15 * d.group) + '%,' + (50 + d.group * 15) + '%)'; });
 
     topGroup.selectAll("line.link")
       .data(json.links)
@@ -163,20 +162,43 @@ function redraw(json) {
       .attr('weight', function(d) { if (d.group == 1) return d.count * 100; else return d.count; })
       .style("stroke-width", function(d) { return Math.max(3 - d.group, 0); });
 
-    d3.select("#title1") 
-      .style("font-family", function(moo) { return d.name; })
-      .html(d.name)
-      
-    d3.select("#lorem1") 
-      .style("font-family", function(moo) { return d.name; })
-      //topGroup.selectAll("g.node,line.link")
-      //.sort(function(a,b) { return a.group < b.group; });
+    var neighbors = json.nodes.filter(function(x) { return x.group == 1 || x.group == 0; });
+    neighbors.sort(function(a,b) { return a.group > b.group; });
+    var sidebar = document.getElementById("sidebar");
+    sidebar.innerHTML = "";
+    for (var i = 0; i < neighbors.length; i++) {
+      var div = document.createElement("div");
+      var h2 = document.createElement("h2");
+      h2.innerText = neighbors[i].name;
+      h2.style.fontFamily = neighbors[i].name;
+      var p = document.createElement("p");
+      p.innerHTML = LOREM_IPSUM;
+      p.style.fontFamily = neighbors[i].name;
+      if (i > 0) {
+        p.style.display = "none";
+        h2.style.fontSize = "small";
+        h2.style.fontSize = "18px";
+        h2.style.lineHeight = "1.5em";
+      }
+      div.appendChild(h2);
+      div.appendChild(p);
+      sidebar.appendChild(div);
+    }
+    sidebar.addEventListener("click", function(e) {
+      var ps = sidebar.getElementsByTagName("p");
+      for (var i = 0; i < ps.length; i++) {
+        ps[i].style.display = "none";
+      }
+      if (e.target.nodeName.toLowerCase() == "h2") {
+        e.target.nextSibling.style.display = "block";
+      }
+    });
 
     force.stop();
     force.start();
   }
 
-  function getAllNeighbours(d) {
+  function getAllNeighbors(d) {
     var result = [];
     for (var i = 0; i < json.links.length; i++) {
       if (json.links[i].source == d) {
@@ -188,7 +210,7 @@ function redraw(json) {
     }
     return result;
   }
-  onClick(selectedNode)
+  onClick(selectedNode);
 }
 
 d3.json("font_data_2.json", redraw);
