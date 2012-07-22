@@ -12,3 +12,23 @@ text {
   font: 18px sans-serif;
   pointer-events: none;
 }
+
+.closeBtn {
+  float: right;
+  font-size: 16px;
+  font-color: #999;
+  padding: 5px;
+}
+
+.closeBtn:hover {
+  font-family: sans-serif;
+  cursor:default;
+  font-weight: bold;
+}
+
+h2.sidefont {
+}
+
+h2.sidefont:hover {
+  cursor:default;
+}

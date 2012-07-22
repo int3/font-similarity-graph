@@ -26,6 +26,8 @@ filled me I can express with one word&mdash;joy.";
 var isDragging = false;
 var dragStart = {};
 
+var showDetails = false; // whether the sidebar info shows details
+
 var force = d3.layout.force()
     .charge(-1500)
     .linkDistance(250)
@@ -110,11 +112,14 @@ function redraw(json) {
 
   function onHover(d){
     //console.log("hover lolz: " + d.name)
+    if (showDetails)
+      return;
     var sidebar = document.getElementById('sidebar');
     sidebar.innerHTML = "<h2>" + d.name + "</h2>" +
       "<p>" + LOREM_IPSUM + "</p>";
     sidebar.style.fontFamily = d.name;
   }
+
   function onClick(d) {
     selectedNode = d;
     topGroup.transition().duration(1000)
@@ -166,9 +171,19 @@ function redraw(json) {
     neighbors.sort(function(a,b) { return a.group > b.group; });
     var sidebar = document.getElementById("sidebar");
     sidebar.innerHTML = "";
+    var closeBtn = document.createElement("div");
+    closeBtn.innerHTML = "&times;";
+    closeBtn.className = "closeBtn";
+    sidebar.appendChild(closeBtn);
+    closeBtn.addEventListener("click", function() {
+      showDetails = false;
+      sidebar.innerHTML = "";
+    });
+    showDetails = true;
     for (var i = 0; i < neighbors.length; i++) {
       var div = document.createElement("div");
       var h2 = document.createElement("h2");
+      h2.className = "sidefont";
       h2.innerText = neighbors[i].name;
       h2.style.fontFamily = neighbors[i].name;
       var p = document.createElement("p");
@@ -211,6 +226,7 @@ function redraw(json) {
     return result;
   }
   onClick(selectedNode);
+  showDetails = false;
 }
 
 d3.json("font_data_2.json", redraw);
